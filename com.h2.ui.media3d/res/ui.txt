@@ -1,0 +1,12 @@
+
+* search
+* channels
+
+
+=metadata=
+* title
+* tags
+* views
+* fav count
+* likes / dislikes
+* thumbnails (time)

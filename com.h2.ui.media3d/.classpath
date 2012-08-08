@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="src-mock"/>
+	<classpathentry kind="src" path="assets"/>
+	<classpathentry kind="src" path="META-INF/spring"/>
+	<classpathentry kind="src" path="config"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="lib/jme/eventbus-1.4.jar"/>
+	<classpathentry kind="lib" path="lib/jme/j-ogg-oggd.jar"/>
+	<classpathentry kind="lib" path="lib/jme/j-ogg-vorbisd.jar"/>
+	<classpathentry kind="lib" path="lib/jme/jbullet.jar"/>
+	<classpathentry kind="lib" path="lib/jme/jheora-jst-debug-0.6.0.jar"/>
+	<classpathentry kind="lib" path="lib/jme/jinput.jar"/>
+	<classpathentry kind="lib" path="lib/jme/jME3-jbullet.jar"/>
+	<classpathentry kind="lib" path="lib/jme/jME3-lwjgl-natives.jar"/>
+	<classpathentry kind="lib" path="lib/jme/lwjgl.jar"/>
+	<classpathentry kind="lib" path="lib/jme/nifty-1.3.jar" sourcepath="lib-src/jme/de.lessvoid.nifty-nifty-sources.jar"/>
+	<classpathentry kind="lib" path="lib/jme/nifty-default-controls-1.3.jar"/>
+	<classpathentry kind="lib" path="lib/jme/nifty-lwjgl-renderer-1.3.jar"/>
+	<classpathentry kind="lib" path="lib/jme/nifty-openal-soundsystem-1.0.jar"/>
+	<classpathentry kind="lib" path="lib/jme/nifty-style-black-1.3.jar"/>
+	<classpathentry kind="lib" path="lib/jme/nifty-style-grey-1.0.jar"/>
+	<classpathentry kind="lib" path="lib/jme/noise-0.0.1-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="lib/jme/stack-alloc.jar"/>
+	<classpathentry kind="lib" path="lib/jme/vecmath.jar"/>
+	<classpathentry kind="lib" path="lib/jme/xmlpull-xpp3-1.1.4c.jar"/>
+	<classpathentry kind="lib" path="lib/jme_fork/jMonkeyEngine3.jar" sourcepath="lib-src/jme_fork/jMonkeyEngine3-sources.jar"/>
+	<classpathentry kind="lib" path="lib/logging/commons-logging-1.1.1.jar"/>
+	<classpathentry kind="lib" path="lib/logging/commons-logging-api-1.1.1.jar"/>
+	<classpathentry kind="lib" path="lib/logging/log4j-1.2.16.jar"/>
+	<classpathentry kind="lib" path="lib/logging/slf4j-api-1.6.1.jar"/>
+	<classpathentry kind="lib" path="lib/logging/slf4j-log4j12-1.6.1.jar"/>
+	<classpathentry kind="lib" path="lib/com/h2/tinyspring/1.0.1/com.h2.tinyspring-tinyspring-1.0.1.jar"/>
+	<classpathentry kind="lib" path="lib/com/google/gdata/1.47.1/gdata-base-1.0.jar"/>
+	<classpathentry kind="lib" path="lib/com/google/gdata/1.47.1/gdata-core-1.0.jar" sourcepath="G:/java/gdata/gdata-src-1.47.1.zip"/>
+	<classpathentry kind="lib" path="lib/com/google/gdata/1.47.1/gdata-youtube-2.0.jar"/>
+	<classpathentry kind="lib" path="lib/com/google/gdata/1.47.1/gdata-youtube-meta-2.0.jar"/>
+	<classpathentry kind="lib" path="lib/com/google/gdata/1.47.1/gdata-client-1.0.jar"/>
+	<classpathentry kind="lib" path="lib/com/google/gdata/1.47.1/gdata-client-meta-1.0.jar"/>
+	<classpathentry kind="lib" path="lib/com/google/gdata/1.47.1/gdata-media-1.0.jar"/>
+	<classpathentry kind="lib" path="lib/com.sun.mail.mail-1.4.2.jar"/>
+	<classpathentry kind="lib" path="lib/guava-11.0.2.jar"/>
+	<classpathentry kind="lib" path="lib/jsr305.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
