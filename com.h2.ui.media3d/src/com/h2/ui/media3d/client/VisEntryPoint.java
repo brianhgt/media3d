@@ -14,6 +14,7 @@ import com.google.gdata.util.ServiceException;
 import com.h2.ui.media3d.com.jme3.asset.plugins.UrlLocator;
 import com.h2.ui.media3d.input.OrbitCamera;
 import com.h2.ui.media3d.scene.shape.ImageSphere;
+import com.h2.ui.media3d.scene.shape.ImageSphere.Entry;
 import com.jme3.app.SimpleApplication;
 import com.jme3.input.InputManager;
 import com.jme3.input.KeyInput;
@@ -85,12 +86,13 @@ public class VisEntryPoint extends SimpleApplication {
                VideoFeed feed = service.query(youTubeQuery, VideoFeed.class);
                
                for (int i = 0; i < feed.getEntries().size(); i++) {
-                  if (i + startIndex >= imageSphere.getQuadGeos().size()) {
+                  if (i + startIndex >= imageSphere.getEntries().size()) {
                      break;
                   }
                   VideoEntry entry = feed.getEntries().get(i);
                   
-                  Geometry geo = imageSphere.getQuadGeos().get(i + (startIndex));
+                  Geometry geo = imageSphere.getEntries().get(i + (startIndex))
+                        .getGeometry();
                   Material mat = new Material(assetManager,
                         "Common/MatDefs/Misc/ColoredTextured.j3md");
 //                  if (mock) {
@@ -115,15 +117,17 @@ public class VisEntryPoint extends SimpleApplication {
             }
          }
          
-         for (Geometry geo : imageSphere.getQuadGeos()) {
-            if (geo.getMaterial() == null) {
-               Material mat = new Material(assetManager, "Common/MatDefs/Misc/ColoredTextured.j3md");
-               mat.setTexture("ColorMap", assetManager.loadTexture("textures/elmo_01.png"));
-               geo.setMaterial(mat);
+         for (Entry entry : imageSphere.getEntries()) {
+            if (entry.getGeometry().getMaterial() == null) {
+               Material mat = new Material(assetManager,
+                     "Common/MatDefs/Misc/ColoredTextured.j3md");
+               mat.setTexture("ColorMap",
+                     assetManager.loadTexture("textures/elmo_01.png"));
+               entry.getGeometry().setMaterial(mat);
             }
          }
          
-         System.out.println("Size: " + imageSphere.getQuadGeos().size());
+         System.out.println("Size: " + imageSphere.getEntries().size());
          
          camera = new OrbitCamera(getCam(), imageSphere, inputManager);
          camera.setEnabled(true);

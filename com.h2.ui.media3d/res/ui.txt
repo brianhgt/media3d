@@ -1,7 +1,15 @@
 
+=TODO=
+* Add metadata (title)
+* Hover enlarge
+* results ordering
+* Stream view
+* Assisted controls
+* Motion controls?
+
+=Views=
 * search
 * channels
-
 
 =metadata=
 * title
