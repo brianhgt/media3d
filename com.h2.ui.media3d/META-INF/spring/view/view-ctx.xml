@@ -13,7 +13,9 @@
            
    <bean id="jmeApplication" class="com.h2.ui.media3d.client.VisEntryPoint"
          p:settings-ref="settings"
-         p:showSettings="false" />
+         p:showSettings="false"
+         p:libParentDir="${gesture.lib.parent.dir}"
+         p:libDir="${gesture.lib.dir}" />
          
    <bean id="settings" class="com.jme3.system.AppSettings"
          p:title="${app.title}">

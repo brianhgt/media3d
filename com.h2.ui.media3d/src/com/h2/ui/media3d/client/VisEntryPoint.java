@@ -1,8 +1,16 @@
 package com.h2.ui.media3d.client;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+
+import microsoftkinectwrapper.ISkeletonFrameHandler;
+import microsoftkinectwrapper.KinectHandler;
+import net.sf.jni4net.Bridge;
+import net.sf.jni4net.attributes.ClrMethod;
 
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
@@ -11,6 +19,12 @@ import com.google.gdata.client.youtube.YouTubeService;
 import com.google.gdata.data.youtube.VideoEntry;
 import com.google.gdata.data.youtube.VideoFeed;
 import com.google.gdata.util.ServiceException;
+import com.h2.ui.gesture.SimpleGestureController;
+import com.h2.ui.gesture.SkeletonShape;
+import com.h2.ui.gesture.model.Joint;
+import com.h2.ui.gesture.model.JointType;
+import com.h2.ui.gesture.model.Skeleton;
+import com.h2.ui.gesture.model.SkeletonRoot;
 import com.h2.ui.media3d.com.jme3.asset.plugins.UrlLocator;
 import com.h2.ui.media3d.input.OrbitCamera;
 import com.h2.ui.media3d.scene.shape.ImageSphere;
@@ -27,6 +41,11 @@ import com.jme3.math.Vector3f;
 import com.jme3.scene.Geometry;
 import com.jme3.system.JmeContext.Type;
 import com.jme3.texture.plugins.AWTLoader;
+import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.converters.reflection.FieldDictionary;
+import com.thoughtworks.xstream.converters.reflection.PureJavaReflectionProvider;
+import com.thoughtworks.xstream.io.xml.XmlFriendlyReplacer;
+import com.thoughtworks.xstream.io.xml.XppDriver;
 
 public class VisEntryPoint extends SimpleApplication {
    
@@ -38,10 +57,22 @@ public class VisEntryPoint extends SimpleApplication {
       app.start();
    }
 
-   private boolean mock = true;
-//   private boolean mock = false;
+//   private boolean mock = true;
+   private boolean mock = false;
    
    private OrbitCamera camera;
+   
+   private Skeleton skeleton;
+   
+   private SkeletonShape skeletonShape;
+   
+   private SimpleGestureController controller = new SimpleGestureController();
+   
+   private KinectHandler kinectHandler;
+   
+   private String libParentDir;
+   
+   private String libDir;
 
    @Override
    public void simpleInitApp() {
@@ -49,20 +80,6 @@ public class VisEntryPoint extends SimpleApplication {
       
       assetManager.registerLoader(AWTLoader.class, "jpg");
       assetManager.registerLocator(null, UrlLocator.class);
-      
-      
-      
-//      Sphere sphere = new Sphere(6, 10, 4f);
-//      sphere.setMode(Mode.Triangles);
-//      
-//      
-//      Geometry sphere_leak = new Geometry("Leak-through color cube", sphere);
-//      Material mat_tl = new Material(assetManager, "Common/MatDefs/Misc/ColoredTextured.j3md");
-//      mat_tl.setTexture("ColorMap", assetManager.loadTexture("textures/elmo_01.png"));
-//      mat_tl.setTexture("ColorMap", assetManager.loadTexture("textures/mars_01.png"));
-////      mat_tl.setColor("Color", new ColorRGBA(1f,0f,1f, 1f)); // purple
-//      sphere_leak.setMaterial(mat_tl);
-//      rootNode.attachChild(sphere_leak);
       
       YouTubeService service = new YouTubeService("Vis");
       
@@ -155,6 +172,85 @@ public class VisEntryPoint extends SimpleApplication {
       
       
       
+      ////
+      skeletonShape = new SkeletonShape(assetManager);
+      
+      try {
+        
+       File parentLibDir = new File(getLibParentDir());
+       File libDir = new File(parentLibDir, getLibDir());
+       Bridge.init(libDir);
+       
+       File path = new File(libDir, "KinectServer.j4n.dll").getCanonicalFile();
+       Bridge.LoadAndRegisterAssemblyFrom(path);
+       
+       kinectHandler = new KinectHandler();
+       System.out.println(kinectHandler.start());
+       
+       kinectHandler.addSkeletonHandler(new ISkeletonFrameHandler() {
+          
+          XStream xstream;
+          {
+             xstream = new XStream();
+             applyAlias(xstream);
+          }
+          
+          @Override
+          @ClrMethod("(LSystem/String;)V")
+          public void onEvent(String event) {
+             SkeletonRoot root = (SkeletonRoot) xstream.fromXML(event);
+             Collection<Skeleton> items = root.getSkeletons();
+             for (Skeleton item : items) {
+//                skeleton.update(item);
+                skeleton = item;
+             }
+
+             rootNode.updateGeometricState();
+          }
+          
+          private void applyAlias(XStream xstream) {
+             
+             xstream.addDefaultImplementation(ArrayList.class, Collection.class);
+             
+             xstream.alias("skeletons", SkeletonRoot.class);
+             xstream.addImplicitCollection(SkeletonRoot.class, "skeletons");
+             
+             xstream.alias("skeleton", Skeleton.class);
+             xstream.alias("joint", Joint.class);
+             xstream.alias("jointType", JointType.class);
+          }
+       });
+       
+       Thread thread = new Thread(new Runnable() {
+          
+          @Override
+          public void run() {
+             while(true) {
+                kinectHandler.ensureRunning();
+                try {
+                   Thread.sleep(5000);
+                } catch (InterruptedException exp) {
+                   exp.printStackTrace();
+                }
+             }
+          }
+       });
+       thread.setDaemon(false);
+       thread.start();
+       
+       kinectHandler.enableSkeleton();
+       
+    
+    } catch (IOException exp) {
+       // TODO Auto-generated catch block
+       exp.printStackTrace();
+    }
+    
+    rootNode.attachChild(skeletonShape);
+      
+      
+      ////
+      
 
       /** Must add a light to make the lit object visible! */
       DirectionalLight sun = new DirectionalLight();
@@ -173,16 +269,18 @@ public class VisEntryPoint extends SimpleApplication {
    
    @Override
    public void update() {
+      
+      controller.update(camera, skeleton);
+//      rootNode.updateGeometricState();
+//      inputManager.update(timer.getTimePerFrame() * speed);
+      
       super.update();
 //      if (camera != null) {
 //         camera.update(timer.getTimePerFrame() * speed);
 //      }
-      
    }
    
    public void initInputCamera(InputManager inputManager) {
-      
-      
       
       if (context.getType() == Type.Display) {
          inputManager.addMapping(INPUT_MAPPING_EXIT,
@@ -194,6 +292,42 @@ public class VisEntryPoint extends SimpleApplication {
       inputManager.addMapping(INPUT_MAPPING_HIDE_STATS, new KeyTrigger(KeyInput.KEY_F5));
       inputManager.addListener(actionListener, INPUT_MAPPING_EXIT,
               INPUT_MAPPING_CAMERA_POS, INPUT_MAPPING_MEMORY, INPUT_MAPPING_HIDE_STATS);
+      
+   }
+   
+   @Override
+   protected void finalize() throws Throwable {
+      kinectHandler.stop();
+      
+      super.finalize();
+   }
+
+   /**
+    * @return the libParentDir
+    */
+   public String getLibParentDir() {
+      return libParentDir;
+   }
+
+   /**
+    * @param libParentDir the libParentDir to set
+    */
+   public void setLibParentDir(String libParentDir) {
+      this.libParentDir = libParentDir;
+   }
+
+   /**
+    * @return the libDir
+    */
+   public String getLibDir() {
+      return libDir;
+   }
+
+   /**
+    * @param libDir the libDir to set
+    */
+   public void setLibDir(String libDir) {
+      this.libDir = libDir;
    }
 
 }
