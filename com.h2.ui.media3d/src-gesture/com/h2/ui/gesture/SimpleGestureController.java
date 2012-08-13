@@ -51,8 +51,8 @@ public class SimpleGestureController {
       float angleLeftZ = Vector3f.UNIT_Z.angleBetween(armLeft);
       System.out.println("angleLeftZ = " + angleLeftZ);
       
-      float zLeftMax = 1.28F;
-      float zLeftMin = 0.3F;
+      float zLeftMax = 1.1F;
+      float zLeftMin = 0.7F;
       float zLeftMid = (zLeftMax - zLeftMin) / 2 + zLeftMin;
       
 //      System.out.println("Left = " + (angleX < xMid));

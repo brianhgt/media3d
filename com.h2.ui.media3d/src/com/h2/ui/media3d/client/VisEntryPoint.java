@@ -20,7 +20,6 @@ import com.google.gdata.data.youtube.VideoEntry;
 import com.google.gdata.data.youtube.VideoFeed;
 import com.google.gdata.util.ServiceException;
 import com.h2.ui.gesture.SimpleGestureController;
-import com.h2.ui.gesture.SkeletonShape;
 import com.h2.ui.gesture.model.Joint;
 import com.h2.ui.gesture.model.JointType;
 import com.h2.ui.gesture.model.Skeleton;
@@ -35,6 +34,7 @@ import com.jme3.input.KeyInput;
 import com.jme3.input.controls.KeyTrigger;
 import com.jme3.light.DirectionalLight;
 import com.jme3.material.Material;
+import com.jme3.material.RenderState.FaceCullMode;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.FastMath;
 import com.jme3.math.Vector3f;
@@ -42,10 +42,6 @@ import com.jme3.scene.Geometry;
 import com.jme3.system.JmeContext.Type;
 import com.jme3.texture.plugins.AWTLoader;
 import com.thoughtworks.xstream.XStream;
-import com.thoughtworks.xstream.converters.reflection.FieldDictionary;
-import com.thoughtworks.xstream.converters.reflection.PureJavaReflectionProvider;
-import com.thoughtworks.xstream.io.xml.XmlFriendlyReplacer;
-import com.thoughtworks.xstream.io.xml.XppDriver;
 
 public class VisEntryPoint extends SimpleApplication {
    
@@ -57,21 +53,21 @@ public class VisEntryPoint extends SimpleApplication {
       app.start();
    }
 
-   private boolean mock = true;
+   private boolean mock = false;
    
    private OrbitCamera camera;
    
    private Skeleton skeleton;
    
-   private SkeletonShape skeletonShape;
-   
-   private SimpleGestureController controller = new SimpleGestureController();
+   private SimpleGestureController controller;
    
    private KinectHandler kinectHandler;
    
    private String libParentDir;
    
    private String libDir;
+
+   private Boolean useKinect = false;
 
    @Override
    public void simpleInitApp() {
@@ -88,10 +84,11 @@ public class VisEntryPoint extends SimpleApplication {
          ImageSphere imageSphere = new ImageSphere(10, 30, 5f);
          
          if (!mock) {
-            int pages = 100;
+            int pages = 3;
             int maxResults = 50;
+            int lastIndex = 0;
             
-            for (int startIndex = 0; startIndex < pages; startIndex += maxResults) {
+            for (int startIndex = 0; startIndex < (pages * maxResults); startIndex += maxResults) {
                YouTubeQuery youTubeQuery = new YouTubeQuery(
                      new URL("http://gdata.youtube.com/feeds/api/"
                      + "standardfeeds/top_favorites"));
@@ -107,31 +104,50 @@ public class VisEntryPoint extends SimpleApplication {
                   }
                   VideoEntry entry = feed.getEntries().get(i);
                   
-                  Geometry geo = imageSphere.getEntries().get(i + (startIndex))
+                  lastIndex = i + startIndex;
+                  Geometry geo = imageSphere.getEntries().get(lastIndex)
                         .getGeometry();
                   Material mat = new Material(assetManager,
                         "Common/MatDefs/Misc/ColoredTextured.j3md");
-//                  if (mock) {
-//                     mat.setTexture("ColorMap", assetManager.loadTexture(
-//                           String.format("%03d", (i + page * 50) % 50) + ".jpg"));
-//                  }
-//                  else {
                      mat.setTexture("ColorMap", assetManager.loadTexture(
                            entry.getMediaGroup().getThumbnails().get(1).getUrl()));
-//                  }
+//                     mat.getAdditionalRenderState().setFaceCullMode(FaceCullMode.Off);
                   
+                  geo.setMaterial(mat);
+               }
+               
+            }
+            
+            for (int startIndex = 0; startIndex < (pages * maxResults); startIndex += maxResults) {
+               YouTubeQuery youTubeQuery = new YouTubeQuery(
+                     new URL("http://gdata.youtube.com/feeds/api/"
+                     + "standardfeeds/most_popular"));
+
+               youTubeQuery.setStartIndex(startIndex + 1);
+               youTubeQuery.setMaxResults(maxResults);
+               
+               VideoFeed feed = service.query(youTubeQuery, VideoFeed.class);
+               
+               for (int i = 0; i < feed.getEntries().size(); i++) {
+                  if (i + startIndex + lastIndex >= imageSphere.getEntries().size()) {
+                     break;
+                  }
+                  VideoEntry entry = feed.getEntries().get(i);
                   
-//                  URL thumb = new URL(entry.getMediaGroup().getThumbnails().get(0)
-//                        .getUrl());
-//                  
-//                  mat.setTexture("ColorMap", new Texture2D(
-//                        loader.load(thumb.openStream(), false)));
+                  Geometry geo = imageSphere.getEntries().get(i + startIndex + lastIndex)
+                        .getGeometry();
+                  Material mat = new Material(assetManager,
+                        "Common/MatDefs/Misc/ColoredTextured.j3md");
+                     mat.setTexture("ColorMap", assetManager.loadTexture(
+                           entry.getMediaGroup().getThumbnails().get(1).getUrl()));
+//                     mat.getAdditionalRenderState().setFaceCullMode(FaceCullMode.Off);
                   
                   geo.setMaterial(mat);
                }
                
             }
          }
+         
          
          for (Entry entry : imageSphere.getEntries()) {
             if (entry.getGeometry().getMaterial() == null) {
@@ -170,82 +186,80 @@ public class VisEntryPoint extends SimpleApplication {
       }
       
       
-      
       ////
-      skeletonShape = new SkeletonShape(assetManager);
       
-      try {
-        
-       File parentLibDir = new File(getLibParentDir());
-       File libDir = new File(parentLibDir, getLibDir());
-       Bridge.init(libDir);
-       
-       File path = new File(libDir, "KinectServer.j4n.dll").getCanonicalFile();
-       Bridge.LoadAndRegisterAssemblyFrom(path);
-       
-       kinectHandler = new KinectHandler();
-       System.out.println(kinectHandler.start());
-       
-       kinectHandler.addSkeletonHandler(new ISkeletonFrameHandler() {
-          
-          XStream xstream;
-          {
-             xstream = new XStream();
-             applyAlias(xstream);
-          }
-          
-          @Override
-          @ClrMethod("(LSystem/String;)V")
-          public void onEvent(String event) {
-             SkeletonRoot root = (SkeletonRoot) xstream.fromXML(event);
-             Collection<Skeleton> items = root.getSkeletons();
-             for (Skeleton item : items) {
-//                skeleton.update(item);
-                skeleton = item;
-             }
+      if (useKinect ) {
+         controller = new SimpleGestureController();
+         try {
+            
+            File parentLibDir = new File(getLibParentDir());
+            File libDir = new File(parentLibDir, getLibDir());
+            Bridge.init(libDir);
+            
+            File path = new File(libDir, "KinectServer.j4n.dll").getCanonicalFile();
+            Bridge.LoadAndRegisterAssemblyFrom(path);
+            
+            kinectHandler = new KinectHandler();
+            System.out.println(kinectHandler.start());
+            
+            kinectHandler.addSkeletonHandler(new ISkeletonFrameHandler() {
+               
+               XStream xstream;
+               {
+                  xstream = new XStream();
+                  applyAlias(xstream);
+               }
+               
+               @Override
+               @ClrMethod("(LSystem/String;)V")
+               public void onEvent(String event) {
+                  SkeletonRoot root = (SkeletonRoot) xstream.fromXML(event);
+                  Collection<Skeleton> items = root.getSkeletons();
+                  for (Skeleton item : items) {
+//                     skeleton.update(item);
+                     skeleton = item;
+                  }
 
-             rootNode.updateGeometricState();
-          }
-          
-          private void applyAlias(XStream xstream) {
-             
-             xstream.addDefaultImplementation(ArrayList.class, Collection.class);
-             
-             xstream.alias("skeletons", SkeletonRoot.class);
-             xstream.addImplicitCollection(SkeletonRoot.class, "skeletons");
-             
-             xstream.alias("skeleton", Skeleton.class);
-             xstream.alias("joint", Joint.class);
-             xstream.alias("jointType", JointType.class);
-          }
-       });
-       
-       Thread thread = new Thread(new Runnable() {
-          
-          @Override
-          public void run() {
-             while(true) {
-                kinectHandler.ensureRunning();
-                try {
-                   Thread.sleep(5000);
-                } catch (InterruptedException exp) {
-                   exp.printStackTrace();
-                }
-             }
-          }
-       });
-       thread.setDaemon(false);
-       thread.start();
-       
-       kinectHandler.enableSkeleton();
-       
-    
-    } catch (IOException exp) {
-       // TODO Auto-generated catch block
-       exp.printStackTrace();
-    }
-    
-    rootNode.attachChild(skeletonShape);
+                  rootNode.updateGeometricState();
+               }
+               
+               private void applyAlias(XStream xstream) {
+                  
+                  xstream.addDefaultImplementation(ArrayList.class, Collection.class);
+                  
+                  xstream.alias("skeletons", SkeletonRoot.class);
+                  xstream.addImplicitCollection(SkeletonRoot.class, "skeletons");
+                  
+                  xstream.alias("skeleton", Skeleton.class);
+                  xstream.alias("joint", Joint.class);
+                  xstream.alias("jointType", JointType.class);
+               }
+            });
+            
+            Thread thread = new Thread(new Runnable() {
+               
+               @Override
+               public void run() {
+                  while(true) {
+                     kinectHandler.ensureRunning();
+                     try {
+                        Thread.sleep(5000);
+                     } catch (InterruptedException exp) {
+                        exp.printStackTrace();
+                     }
+                  }
+               }
+            });
+            thread.setDaemon(false);
+            thread.start();
+            
+            kinectHandler.enableSkeleton();
+            
+         } catch (IOException exp) {
+            // TODO Auto-generated catch block
+            exp.printStackTrace();
+         }
+      }
       
       
       ////
@@ -268,15 +282,11 @@ public class VisEntryPoint extends SimpleApplication {
    
    @Override
    public void update() {
-      
-      controller.update(camera, skeleton);
-//      rootNode.updateGeometricState();
-//      inputManager.update(timer.getTimePerFrame() * speed);
+      if (controller != null) {
+         controller.update(camera, skeleton);
+      }
       
       super.update();
-//      if (camera != null) {
-//         camera.update(timer.getTimePerFrame() * speed);
-//      }
    }
    
    public void initInputCamera(InputManager inputManager) {

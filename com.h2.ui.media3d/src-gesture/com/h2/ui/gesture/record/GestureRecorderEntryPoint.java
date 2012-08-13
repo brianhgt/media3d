@@ -67,7 +67,7 @@ public class GestureRecorderEntryPoint extends SimpleApplication {
       skeletonShape = new SkeletonShape(assetManager);
       
       //Setup Kinect
-      initKinect(false);
+      initKinect(true);
       
       
       rootNode.attachChild(skeletonShape);
