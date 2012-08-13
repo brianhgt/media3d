@@ -92,9 +92,5 @@ public class SimpleGestureController {
          camera.onAnalog(name, value, 0.0F);
          camera.setCanRotate(false);
       }
-      
-      if (camera != null) {
-         
-      }
    }
 }

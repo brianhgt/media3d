@@ -57,8 +57,7 @@ public class VisEntryPoint extends SimpleApplication {
       app.start();
    }
 
-//   private boolean mock = true;
-   private boolean mock = false;
+   private boolean mock = true;
    
    private OrbitCamera camera;
    
